@@ -1,0 +1,26 @@
+# Ignore individual project repositories
+
+dot_game/
+collect_the_dots/
+avoid_the_walls/
+growing_line/
+paddle_game/
+brick_game/
+avoid_the_falling_objects/
+line_trails/
+shooter_game/
+destroy_the_objects/
+cross_the_road/
+jumping_game/
+landing_game/
+top_down_racing/
+tank_game/
+maze_game/
+rescue_game/
+segmented_enemy_game/
+room_game/
+dungeon_game/
+top_down_dungeon_game/
+tile_game/
+isometric_game/
+adventure_game/
