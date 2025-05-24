@@ -15,8 +15,8 @@ EMCC_LDFLAGS = ~/Desktop/raylib/build_html5/raylib/libraylib.a \
 
 # Source files and targets
 SRCS = main.cpp
-TARGET = dot_game_v4
-HTML5_TARGET = dot_game_v4.html
+TARGET = collect_the_dots_v1
+HTML5_TARGET = collect_the_dots_v1.html
 
 # Native build target
 $(TARGET): $(SRCS)

@@ -1,4 +1,5 @@
 #include "raylib.h"
+#include "raymath.h" // Add this for vector math
 #include <cstdlib>
 #include <ctime>
 #include <functional>
@@ -40,6 +41,18 @@ public:
   float GetRadius() const { return radius; }
 
   void SetPosition(Vector2 newPos) { position = newPos; }
+
+protected:
+  static Vector2 Vector2WeightedAttraction(Vector2 from, Vector2 to,
+                                           float threshold, float weight) {
+    Vector2 dir = Vector2Subtract(to, from);
+    float dist = Vector2Length(dir);
+    if (dist < 0.01f || dist > threshold)
+      return {0, 0};
+    dir = Vector2Scale(dir, 1.0f / dist); // normalize
+    float strength = weight * (threshold - dist) / threshold;
+    return Vector2Scale(dir, strength);
+  }
 };
 
 // PositionManager class
@@ -123,6 +136,10 @@ public:
 
     return newPos;
   }
+
+  Vector2 GetPlayerPosition() const {
+    return player ? player->GetPosition() : Vector2{0, 0};
+  }
 };
 
 // Player class (inherits from Dot)
@@ -164,6 +181,26 @@ public:
       : Dot(startPos, radius, color) {}
 
   virtual ~Target() {}
+
+  void Control(float deltaTime, PositionManager &positionManager) override {
+    // Strong repulsion from player only
+    Vector2 playerPos = positionManager.GetPlayerPosition();
+    Vector2 repulsion =
+        Vector2WeightedAttraction(position, playerPos, 200.0f, -400.0f);
+
+    // Use repulsion as velocity
+    Vector2 velocity = repulsion;
+
+    // Limit speed
+    float maxSpeed = 160.0f;
+    if (Vector2Length(velocity) > maxSpeed) {
+      velocity = Vector2Scale(Vector2Normalize(velocity), maxSpeed);
+    }
+
+    // Move target
+    Vector2 newPos = Vector2Add(position, Vector2Scale(velocity, deltaTime));
+    position = positionManager.UpdatePosition(this, newPos, radius);
+  }
 
   void HandleCollision(Dot *other) override {
     // Respawn the target at a new valid position
