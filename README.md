@@ -1,6 +1,8 @@
 # Game Development Progression Path
 
-This document outlines a step-by-step progression to learn game development using **Raylib** and **C++**, focusing on retro-style games inspired by old consoles like the Vectrex, Atari, and Commodore systems. The goal is to incrementally build the skills necessary to create and release games while avoiding being overwhelmed by new concepts and thought patterns.
+Link to main site: [www.dogwatch.dev](https://www.dogwatch.dev)
+
+This document outlines an AI generated step-by-step progression to learn game development using **Raylib** and **C++**, focusing on retro-style games inspired by old consoles like the Vectrex, Atari, and Commodore systems. The goal is to incrementally build the skills necessary to create and release games while avoiding being overwhelmed by new concepts and thought patterns.
 
 ---
 
