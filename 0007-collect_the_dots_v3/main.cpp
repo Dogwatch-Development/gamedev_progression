@@ -86,6 +86,8 @@ public:
   }
 
   void Update(float deltaTime) {
+    // Track which targets need to be respawned this frame
+    std::vector<Dot *> targetsToRespawn;
     // Check for collisions between all dots
     for (size_t i = 0; i < dots.size(); ++i) {
       for (size_t j = i + 1; j < dots.size(); ++j) {
@@ -95,23 +97,44 @@ public:
         DotType typeB = dots[j].type;
         if (CheckCollisionCircles(dotA->GetPosition(), dotA->GetRadius(),
                                   dotB->GetPosition(), dotB->GetRadius())) {
-          dotA->HandleCollision(dotB);
-          dotB->HandleCollision(dotA);
-
-          // Score increment if player and target collide
+          // Only handle respawn/game over for player-target and player-enemy
           if (onScoreIncrement &&
               ((typeA == DotType::Player && typeB == DotType::Target) ||
                (typeA == DotType::Target && typeB == DotType::Player))) {
             onScoreIncrement();
-          }
-          // Game over if player and enemy collide
-          if (onGameOver &&
-              ((typeA == DotType::Player && typeB == DotType::Enemy) ||
-               (typeA == DotType::Enemy && typeB == DotType::Player))) {
+            // Mark the target for respawn
+            if (typeA == DotType::Target)
+              targetsToRespawn.push_back(dotA);
+            if (typeB == DotType::Target)
+              targetsToRespawn.push_back(dotB);
+          } else if (onGameOver &&
+                     ((typeA == DotType::Player && typeB == DotType::Enemy) ||
+                      (typeA == DotType::Enemy && typeB == DotType::Player))) {
             onGameOver();
+          } else {
+            // For all other collisions, resolve overlap (simple elastic push)
+            Vector2 posA = dotA->GetPosition();
+            Vector2 posB = dotB->GetPosition();
+            float rA = dotA->GetRadius();
+            float rB = dotB->GetRadius();
+            Vector2 delta = Vector2Subtract(posB, posA);
+            float dist = Vector2Length(delta);
+            if (dist == 0)
+              dist = 0.01f; // Prevent div by zero
+            float overlap = (rA + rB) - dist;
+            if (overlap > 0) {
+              Vector2 push =
+                  Vector2Scale(Vector2Normalize(delta), overlap / 2.0f);
+              dotA->SetPosition(Vector2Subtract(posA, push));
+              dotB->SetPosition(Vector2Add(posB, push));
+            }
           }
         }
       }
+    }
+    // Respawn all targets that were collected this frame
+    for (Dot *t : targetsToRespawn) {
+      t->SetPosition(this->GetValidPosition(t->GetRadius()));
     }
     for (auto &entry : dots) {
       entry.dot->Control(deltaTime, *this);
@@ -221,9 +244,13 @@ public:
   }
 
   void HandleCollision(Dot *other) override {
-    // Respawn the target at a new valid position
-    position = {static_cast<float>(rand() % screenWidth),
-                static_cast<float>(rand() % screenHeight)};
+    // Only respawn if collided with player
+    if (other->GetType() == DotType::Player) {
+      position = {static_cast<float>(rand() % screenWidth),
+                  static_cast<float>(rand() % screenHeight)};
+    }
+    // Otherwise, do nothing (collision resolution is handled in
+    // PositionManager)
   }
 };
 
@@ -252,8 +279,9 @@ public:
   }
 
   void HandleCollision(Dot *other) override {
-    // Enemy-specific collision handling (e.g., could end game if collides with
-    // player)
+    // Only end game if collided with player (handled in PositionManager)
+    // Otherwise, do nothing (collision resolution is handled in
+    // PositionManager)
   }
 };
 
@@ -261,74 +289,94 @@ public:
 class Game {
 private:
   std::unique_ptr<Player> player;
-  std::unique_ptr<Target> target;
-  std::unique_ptr<Enemy> enemy;
+  std::vector<std::unique_ptr<Target>> targets;
+  std::vector<std::unique_ptr<Enemy>> enemies;
   PositionManager positionManager;
   int score;
   bool gameOver;
 
-  void InitGameObjects() {
-    // Initialize player and target
-    player = std::make_unique<Player>(
-        Vector2{screenWidth / 2.0f, screenHeight / 2.0f}, 15.0f, BLUE, 200.0f);
-    target = std::make_unique<Target>(positionManager.GetValidPosition(10.0f),
-                                      10.0f, RED);
-    enemy = std::make_unique<Enemy>(positionManager.GetValidPosition(12.0f),
-                                    12.0f, DARKGREEN, 120.0f);
-
-    // Register dots with the position manager
-    positionManager = PositionManager(); // Reset position manager
-    positionManager.AddDot(player.get());
-    positionManager.AddDot(target.get());
-    positionManager.AddDot(enemy.get());
-
-    // Set the score increment callback
-    positionManager.SetScoreIncrementCallback([this]() { score++; });
-    // Set the game over callback
-    positionManager.SetGameOverCallback([this]() { gameOver = true; });
-  }
+  void InitGameObjects();
+  void AddTarget();
+  void AddEnemy();
 
 public:
-  Game() : score(0), gameOver(false) { InitGameObjects(); }
-
-  void Reset() {
-    score = 0;
-    gameOver = false;
-    InitGameObjects();
-  }
-
-  void Update(float deltaTime) {
-    if (!gameOver) {
-      // Delegate all updates to the PositionManager
-      positionManager.Update(deltaTime);
-    } else {
-      if (IsKeyPressed(KEY_R)) {
-        Reset();
-      }
-    }
-  }
-
-  void Render() {
-    BeginDrawing();
-    ClearBackground(RAYWHITE);
-
-    if (gameOver) {
-      DrawText("Game Over!", screenWidth / 2 - 100, screenHeight / 2 - 40, 40,
-               RED);
-      DrawText(TextFormat("Final Score: %d", score), screenWidth / 2 - 100,
-               screenHeight / 2 + 10, 30, DARKGRAY);
-      DrawText("Press R to Restart", screenWidth / 2 - 120,
-               screenHeight / 2 + 60, 28, DARKBLUE);
-    } else {
-      DrawText("Catch the moving dot!", 10, 10, 20, DARKGRAY);
-      DrawText(TextFormat("Score: %d", score), 10, 40, 20, DARKGRAY);
-      player->Draw();
-      target->Draw();
-      enemy->Draw();
-    }
-    EndDrawing();
-  }
+  Game();
+  void Reset();
+  void Update(float deltaTime);
+  void Render();
 };
+
+// Definitions for Game methods
+Game::Game() : score(0), gameOver(false) { InitGameObjects(); }
+
+void Game::InitGameObjects() {
+  player = std::make_unique<Player>(
+      Vector2{screenWidth / 2.0f, screenHeight / 2.0f}, 15.0f, BLUE, 200.0f);
+  positionManager = PositionManager();
+  targets.clear();
+  enemies.clear();
+  AddTarget();
+  AddEnemy();
+  positionManager.AddDot(player.get());
+  positionManager.SetScoreIncrementCallback([this]() {
+    score++;
+    AddTarget();
+    AddEnemy();
+  });
+  positionManager.SetGameOverCallback([this]() { gameOver = true; });
+}
+
+void Game::AddTarget() {
+  auto t = std::make_unique<Target>(positionManager.GetValidPosition(10.0f),
+                                    10.0f, RED);
+  positionManager.AddDot(t.get());
+  targets.push_back(std::move(t));
+}
+
+void Game::AddEnemy() {
+  auto e = std::make_unique<Enemy>(positionManager.GetValidPosition(12.0f),
+                                   12.0f, DARKGREEN, 120.0f);
+  positionManager.AddDot(e.get());
+  enemies.push_back(std::move(e));
+}
+
+void Game::Reset() {
+  score = 0;
+  gameOver = false;
+  InitGameObjects();
+}
+
+void Game::Update(float deltaTime) {
+  if (!gameOver) {
+    positionManager.Update(deltaTime);
+  } else {
+    if (IsKeyPressed(KEY_R)) {
+      Reset();
+    }
+  }
+}
+
+void Game::Render() {
+  BeginDrawing();
+  ClearBackground(RAYWHITE);
+  if (gameOver) {
+    DrawText("Game Over!", screenWidth / 2 - 100, screenHeight / 2 - 40, 40,
+             RED);
+    DrawText(TextFormat("Final Score: %d", score), screenWidth / 2 - 100,
+             screenHeight / 2 + 10, 30, DARKGRAY);
+    DrawText("Press R to Restart", screenWidth / 2 - 120, screenHeight / 2 + 60,
+             28, DARKBLUE);
+  } else {
+    DrawText("Catch the moving dot!", 10, 10, 20, DARKGRAY);
+    DrawText(TextFormat("Score: %d", score), 10, 40, 20, DARKGRAY);
+    player->Draw();
+    for (const auto &t : targets)
+      t->Draw();
+    for (const auto &e : enemies)
+      e->Draw();
+  }
+  EndDrawing();
+}
 
 Game *gameInstance = nullptr;
 
@@ -350,14 +398,14 @@ int main() {
   static Game game;
   gameInstance = &game;
 
-#ifndef PLATFORM_WEB
+#ifdef PLATFORM_WEB
+  emscripten_set_main_loop(MainLoop, 0, 1);
+#else
   while (!WindowShouldClose()) {
     float deltaTime = GetFrameTime();
     game.Update(deltaTime);
     game.Render();
   }
-#else
-  emscripten_set_main_loop(MainLoop, 0, 1);
 #endif
 
   CloseWindow();
