@@ -1,5 +1,6 @@
 #include "loop.h"
 #include "raylib.h"
+#include <cassert>
 #include <cstdlib>
 #include <ctime>
 
@@ -9,14 +10,17 @@ const int screenHeight = 600;
 
 class GameState {
 public:
-  bool isGameOver = false;
-  // Add more game state variables as needed
+  // shuttingDown, flipped when the player expresses desire to quit
+  bool shuttingDown = false;
 };
 
 class InputHandler {
 public:
-  void HandleInput() {
-    // Implement input handling
+  void HandleInput(GameState &state) {
+    // Escape to quit
+    if (IsKeyPressed(KEY_ESCAPE)) {
+      state.shuttingDown = true;
+    }
   }
 };
 
@@ -42,7 +46,18 @@ public:
 class Renderer {
 public:
   void Render(const GameState &state) {
-    // Implement rendering
+    BeginDrawing();
+    ClearBackground(BLACK);
+
+    const char text[] = "EUREKA!";
+    int fontSize = 120;
+    int textWidth = MeasureText(text, fontSize);
+    int centerX = screenWidth / 2;
+    int centerY = screenHeight / 2;
+    DrawText(text, centerX - (textWidth / 2), centerY - (fontSize / 2),
+             fontSize, RAYWHITE);
+
+    EndDrawing();
   }
 };
 
@@ -55,28 +70,26 @@ public:
   EntityManager entityManager;
   Renderer renderer;
 
-  void HandleInput() { inputHandler.HandleInput(); }
+  void HandleInput() { inputHandler.HandleInput(gameState); }
 
   void Update(float deltaTime) {
+    if (gameState.shuttingDown) {
+      EndGame();
+      return;
+    }
     physics.Update(gameState, deltaTime);
     entityManager.Update(gameState, deltaTime);
-    // Possibly other updates
   }
 
-  void Render() {
-    BeginDrawing();
-    ClearBackground(BLACK);
+  void Render() { renderer.Render(gameState); }
 
-    renderer.Render(gameState);
-
-    EndDrawing();
-  }
+  void EndGame() { gameState.shuttingDown = true; }
 };
 
 void MainLoop(void *gamePtr) {
   Game *game = reinterpret_cast<Game *>(gamePtr);
-  if (!game)
-    return;
+
+  assert(game && "gamePtr is null in MainLoop");
 
   game->HandleInput();
   game->Update(GetFrameTime());
@@ -97,9 +110,6 @@ int main() {
   // Run the main loop
   RunPlatformLoop(MainLoop, &game);
 
-  // De-initialization
-  CloseWindow();
-
-  // Exit the program
+  // Return to OS
   return 0;
 }
