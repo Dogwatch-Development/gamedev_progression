@@ -2,6 +2,8 @@
 
 .PHONY: all desktop web clean clean-desktop clean-web
 
+SRCS = main.cpp game.cpp
+
 all: desktop web
 
 # Build desktop target
