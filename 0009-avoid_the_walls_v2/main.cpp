@@ -1,13 +1,12 @@
+// main.cpp
+
+#include "constants.h"
 #include "game.h"
 #include "loop.h"
 #include "raylib.h"
 #include <cassert>
 #include <cstdlib>
 #include <ctime>
-
-// Global constants
-const int screenWidth = 800;
-const int screenHeight = 600;
 
 void MainLoop(void *gamePtr) {
   Game *game = reinterpret_cast<Game *>(gamePtr);

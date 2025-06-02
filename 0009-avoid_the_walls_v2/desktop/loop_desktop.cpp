@@ -1,3 +1,6 @@
+// loop_desktop.cpp
+
+#include "../game.h"
 #include "../loop.h"
 #include "raylib.h"
 

@@ -1,13 +1,11 @@
+// game.cpp
+
 #include "game.h"
+#include "constants.h"
 #include "raylib.h"
 #include <cassert>
 #include <cstdlib>
 #include <ctime>
-
-// TODO: figure out a better way to handle screen dimensions
-// Global constants
-const int screenWidth = 800;
-const int screenHeight = 600;
 
 // InputHandler implementation
 void InputHandler::HandleInput(GameState &state) {
