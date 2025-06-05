@@ -8,10 +8,13 @@ static void (*RealMainLoop)(void *gamePtr) = nullptr;
 static void *RealGamePtr = nullptr;
 
 static void WrappedMainLoop(void *gamePtr) {
-  // Check for shutdown
+
   Game *game = reinterpret_cast<Game *>(gamePtr);
+
+  // Check for shutdown
   if (game->gameState.shuttingDown) {
     // If the game is shutting down, cancel the main loop
+    TraceLog(LOG_INFO, "[web] Shutting down game, cancelling main loop.");
     emscripten_cancel_main_loop();
   }
 
