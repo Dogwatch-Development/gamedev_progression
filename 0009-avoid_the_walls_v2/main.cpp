@@ -19,19 +19,14 @@ void MainLoop(void *gamePtr) {
 }
 
 int main() {
-  // Initialization
-  InitWindow(screenWidth, screenHeight, "Avoid the Walls V2");
-  SetTargetFPS(60);
-
   // Seed random number generator
   std::srand(std::time(nullptr));
 
   // Create game instance
   Game game;
 
-  // Run the main loop
+  // Run the main loop (platform handles window, etc)
   RunPlatformLoop(MainLoop, &game);
 
-  // Return to OS
   return 0;
 }

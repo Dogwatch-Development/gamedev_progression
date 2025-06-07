@@ -9,10 +9,6 @@
 
 // InputHandler implementation
 void InputHandler::HandleInput(GameState &state) {
-  if (IsKeyPressed(KEY_ESCAPE)) {
-    TraceLog(LOG_INFO, "Escape key pressed, shutting down game.");
-    state.shuttingDown = true;
-  }
   if (IsKeyPressed(KEY_Q)) {
     TraceLog(LOG_INFO, "Q key pressed, shutting down game.");
     state.shuttingDown = true;
