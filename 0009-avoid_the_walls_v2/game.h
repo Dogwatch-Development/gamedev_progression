@@ -19,6 +19,9 @@ public:
   bool gameOver;
   bool shutdownRequested;
   bool resetRequested;
+  float elapsedTime;    // Timer for HUD
+  bool countdownActive; // Is countdown running?
+  float countdownTime;  // Time left in countdown
   GameState();
 };
 
