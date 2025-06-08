@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "entity.h"
 #include "raylib.h"
 
 // ----------- GameState -----------
@@ -17,20 +18,6 @@ class GameState {
 public:
   bool shuttingDown;
   GameState();
-};
-
-// ----------- InputHandler -----------
-// Manages: user input handling
-// Should Own:
-//   - Mapping input keys/buttons to actions
-//   - Detecting key presses or mouse input
-// Should Not:
-//   - Update entities
-//   - Play sounds
-class InputHandler {
-public:
-  void HandleInput(GameState &state);
-  InputHandler();
 };
 
 // ----------- AudioManager -----------
@@ -50,20 +37,6 @@ private:
   Sound sound;
 };
 
-// ----------- PhysicsEngine -----------
-// Manages: movement and physical simulation
-// Should Own:
-//   - Updating positions, velocities, forces
-//   - (Later) Handling collisions, gravity, friction
-// Should Not:
-//   - Render entities
-//   - Handle user input
-class PhysicsEngine {
-public:
-  void Update(GameState &state, float deltaTime);
-  PhysicsEngine();
-};
-
 // ----------- EntityManager -----------
 // Manages: the collection of game entities
 // Should Own:
@@ -75,8 +48,39 @@ public:
 //   itself)
 class EntityManager {
 public:
+  Player player;
   void Update(GameState &state, float deltaTime);
   EntityManager();
+
+  void SetPlayerMoveDirection(Vector2 direction);
+};
+
+// ----------- InputHandler -----------
+// Manages: user input handling
+// Should Own:
+//   - Mapping input keys/buttons to actions
+//   - Detecting key presses or mouse input
+// Should Not:
+//   - Update entities
+//   - Play sounds
+class InputHandler {
+public:
+  void HandleInput(GameState &state, EntityManager &entities);
+  InputHandler();
+};
+
+// ----------- PhysicsEngine -----------
+// Manages: movement and physical simulation
+// Should Own:
+//   - Updating positions, velocities, forces
+//   - (Later) Handling collisions, gravity, friction
+// Should Not:
+//   - Render entities
+//   - Handle user input
+class PhysicsEngine {
+public:
+  void Update(GameState &state, EntityManager &entities, float deltaTime);
+  PhysicsEngine();
 };
 
 // ----------- Renderer -----------

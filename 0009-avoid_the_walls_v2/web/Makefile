@@ -5,7 +5,7 @@ EMCC_LDFLAGS = ~/Desktop/raylib/build_html5/raylib/libraylib.a \
                -s USE_GLFW=3 -s ASYNCIFY -s TOTAL_MEMORY=67108864 \
                --shell-file ~/Desktop/raylib/src/minshell.html
 
-SRCS = ../main.cpp ../game.cpp loop_web.cpp
+SRCS = ../main.cpp ../game.cpp loop_web.cpp ../entity.cpp
 TARGET = ../avoid_the_walls.html
 
 all: $(TARGET)
