@@ -13,7 +13,7 @@ static void WrappedMainLoop(void *gamePtr) {
 
   Game *game = reinterpret_cast<Game *>(gamePtr);
 
-  if (game->gameState.shuttingDown) {
+  if (game->gameState.shutdownRequested) {
     emscripten_cancel_main_loop();
   }
 

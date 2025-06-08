@@ -6,7 +6,8 @@
 
 // ----------- GameState -----------
 
-GameState::GameState() : shuttingDown(false) {}
+GameState::GameState()
+    : gameOver(false), shutdownRequested(false), resetRequested(false) {}
 
 // ----------- InputHandler -----------
 
@@ -27,17 +28,10 @@ void InputHandler::HandleInput(GameState &state, EntityManager &entities) {
   entities.SetPlayerMoveDirection(direction);
 
   if (IsKeyPressed(KEY_Q)) {
-    state.shuttingDown = true;
+    state.shutdownRequested = true;
   }
   if (IsKeyPressed(KEY_R)) {
-    // Reset player to center and moving right
-    int screenW = GetScreenWidth();
-    int screenH = GetScreenHeight();
-    entities.player.position = {
-        (float)screenW / 2 - entities.player.bounds.width / 2,
-        (float)screenH / 2 - entities.player.bounds.height / 2};
-    entities.player.moveDir = {1, 0};
-    state.shuttingDown = false;
+    state.resetRequested = true;
   }
 };
 
@@ -82,7 +76,7 @@ void PhysicsEngine::Update(GameState &state, EntityManager &entities,
       player.position.x + player.bounds.width > screenW ||
       player.position.y < 0 ||
       player.position.y + player.bounds.height > screenH) {
-    state.shuttingDown = true; // End the game if player hits the wall
+    state.gameOver = true; // Game over if player hits the edge
   }
 }
 
@@ -100,16 +94,39 @@ void EntityManager::SetPlayerMoveDirection(Vector2 direction) {
   player.moveDir = direction;
 }
 
+void EntityManager::ResetPlayer() {
+  int screenW = GetScreenWidth();
+  int screenH = GetScreenHeight();
+  player.position = {(float)screenW / 2 - player.bounds.width / 2,
+                     (float)screenH / 2 - player.bounds.height / 2};
+  player.moveDir = {1, 0};
+  player.bounds.x = player.position.x;
+  player.bounds.y = player.position.y;
+}
+
 // ----------- Renderer -----------
 
 // Note to AI: Window is already initialized in platform loop
 Renderer::Renderer() {}
 
-void Renderer::Render(const EntityManager &entities) {
+void Renderer::Render(const EntityManager &entities, const GameState &state) {
   BeginDrawing();
   ClearBackground(BLACK);
 
-  entities.player.Draw(); // Draw the player entity
+  if (state.gameOver) {
+    int screenW = GetScreenWidth();
+    int screenH = GetScreenHeight();
+    const char *msg = "GAME OVER";
+    const char *prompt = "Press R to Restart";
+    int fontSize = 40;
+    int promptSize = 20;
+    DrawText(msg, screenW / 2 - MeasureText(msg, fontSize) / 2,
+             screenH / 2 - fontSize, fontSize, RED);
+    DrawText(prompt, screenW / 2 - MeasureText(prompt, promptSize) / 2,
+             screenH / 2 + 10, promptSize, WHITE);
+  } else {
+    entities.player.Draw(); // Draw the player entity
+  }
 
   EndDrawing();
 }
@@ -123,14 +140,22 @@ Game::Game()
 void Game::HandleInput() { inputHandler.HandleInput(gameState, entityManager); }
 
 void Game::Update(float deltaTime) {
-  physicsEngine.Update(gameState, entityManager, deltaTime);
-  entityManager.Update(gameState, deltaTime);
+  if (gameState.resetRequested) {
+    entityManager.ResetPlayer();
+    gameState.shutdownRequested = false;
+    gameState.resetRequested = false;
+    gameState.gameOver = false;
+  }
+  if (!gameState.gameOver) {
+    physicsEngine.Update(gameState, entityManager, deltaTime);
+    entityManager.Update(gameState, deltaTime);
+  }
 }
 
-void Game::Render() { renderer.Render(entityManager); }
+void Game::Render() { renderer.Render(entityManager, gameState); }
 
 void Game::Run() {
-  while (!gameState.shuttingDown) {
+  while (!gameState.shutdownRequested) {
     HandleInput();
     Update(GetFrameTime());
     Render();

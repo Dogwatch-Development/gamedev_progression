@@ -14,7 +14,7 @@ void RunPlatformLoop(void (*MainLoop)(void *gamePtr), void *gamePtr) {
 
     Game *game = reinterpret_cast<Game *>(gamePtr);
 
-    if (game->gameState.shuttingDown) {
+    if (game->gameState.shutdownRequested) {
       break;
     }
 

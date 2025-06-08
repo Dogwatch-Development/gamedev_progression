@@ -16,7 +16,9 @@
 //   - Know about input or rendering
 class GameState {
 public:
-  bool shuttingDown;
+  bool gameOver;
+  bool shutdownRequested;
+  bool resetRequested;
   GameState();
 };
 
@@ -53,6 +55,7 @@ public:
   EntityManager();
 
   void SetPlayerMoveDirection(Vector2 direction);
+  void ResetPlayer(); // Add this method
 };
 
 // ----------- InputHandler -----------
@@ -93,7 +96,7 @@ public:
 //   - Handle input or play sounds
 class Renderer {
 public:
-  void Render(const EntityManager &entities);
+  void Render(const EntityManager &entities, const GameState &state);
   Renderer();
 };
 
