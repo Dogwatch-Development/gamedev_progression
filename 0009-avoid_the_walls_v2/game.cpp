@@ -1,65 +1,91 @@
 // game.cpp
 
 #include "game.h"
-#include "constants.h"
 #include "raylib.h"
-#include <cassert>
-#include <cstdlib>
-#include <ctime>
 
-// InputHandler implementation
+// ----------- GameState -----------
+
+GameState::GameState() : shuttingDown(false) {}
+
+// ----------- InputHandler -----------
+
+InputHandler::InputHandler() {}
+
 void InputHandler::HandleInput(GameState &state) {
   if (IsKeyPressed(KEY_Q)) {
-    TraceLog(LOG_INFO, "Q key pressed, shutting down game.");
     state.shuttingDown = true;
   }
+};
+
+// ----------- AudioManager -----------
+
+AudioManager::AudioManager() {
+  InitAudioDevice();             // Initialize audio device
+  sound = LoadSound("beep.wav"); // Load a beep sound
 }
 
-// PhysicsEngine implementation
+void AudioManager::PlayBeep() {
+  PlaySound(sound); // Load and play a beep sound
+}
+
+AudioManager::~AudioManager() {
+  UnloadSound(sound); // Unload the sound
+  CloseAudioDevice(); // Close the audio device
+}
+
+// ----------- PhysicsEngine -----------
+
+PhysicsEngine::PhysicsEngine() {}
+
 void PhysicsEngine::Update(GameState &state, float deltaTime) {
-  // Implement physics update
+  // Placeholder for physics update logic
 }
 
-// EntityManager implementation
+// ----------- EntityManager -----------
+
+EntityManager::EntityManager() {
+  // Initialize entities, if any
+}
+
 void EntityManager::Update(GameState &state, float deltaTime) {
-  // Implement entity update
+  // Placeholder for entity update logic
 }
 
-// Renderer implementation
-void Renderer::Render(const GameState &state) {
+// ----------- Renderer -----------
+
+// Note to AI: Window is already initialized in platform loop
+Renderer::Renderer() {}
+
+void Renderer::Render(const EntityManager &entities) {
   BeginDrawing();
   ClearBackground(BLACK);
 
-  const char text[] = "EUREKA!";
-  int fontSize = 120;
-  int textWidth = MeasureText(text, fontSize);
-  int centerX = screenWidth / 2;
-  int centerY = screenHeight / 2;
-  DrawText(text, centerX - (textWidth / 2), centerY - (fontSize / 2), fontSize,
-           RAYWHITE);
+  // Placeholder for rendering entities
+  // For example, draw a simple rectangle
+  DrawRectangle(100, 100, 50, 50, BLUE);
 
   EndDrawing();
 }
 
-// GameState constructor
-GameState::GameState() : shuttingDown(false) {}
+// ----------- Game -----------
 
-// Game constructor
 Game::Game()
-    : gameState(), inputHandler(), audioManager(), physics(), entityManager(),
-      renderer() {}
+    : gameState(), inputHandler(), audioManager(), physicsEngine(),
+      entityManager(), renderer() {}
 
 void Game::HandleInput() { inputHandler.HandleInput(gameState); }
 
 void Game::Update(float deltaTime) {
-  if (gameState.shuttingDown) {
-    EndGame();
-    return;
-  }
-  physics.Update(gameState, deltaTime);
+  physicsEngine.Update(gameState, deltaTime);
   entityManager.Update(gameState, deltaTime);
 }
 
-void Game::Render() { renderer.Render(gameState); }
+void Game::Render() { renderer.Render(entityManager); }
 
-void Game::EndGame() { gameState.shuttingDown = true; }
+void Game::Run() {
+  while (!gameState.shuttingDown) {
+    HandleInput();
+    Update(GetFrameTime());
+    Render();
+  }
+}

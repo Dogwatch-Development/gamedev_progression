@@ -1,9 +1,7 @@
 // main.cpp
 
-#include "constants.h"
 #include "game.h"
 #include "loop.h"
-#include "raylib.h"
 #include <cassert>
 #include <cstdlib>
 #include <ctime>
@@ -13,9 +11,7 @@ void MainLoop(void *gamePtr) {
 
   assert(game && "gamePtr is null in MainLoop");
 
-  game->HandleInput();
-  game->Update(GetFrameTime());
-  game->Render();
+  game->Run();
 }
 
 int main() {
