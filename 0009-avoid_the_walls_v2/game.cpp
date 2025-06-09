@@ -212,11 +212,13 @@ void Game::Update(float deltaTime) {
 void Game::Render() { renderer.Render(entityManager, gameState); }
 
 void Game::Run() {
-  // Ensure player is centered after window is created
-  entityManager.ResetPlayer();
-  while (!gameState.shutdownRequested) {
-    HandleInput();
-    Update(GetFrameTime());
-    Render();
+  // Ensure player is centered after window is created (only on first frame)
+  static bool initialized = false;
+  if (!initialized) {
+    entityManager.ResetPlayer();
+    initialized = true;
   }
+  HandleInput();
+  Update(GetFrameTime());
+  Render();
 }
