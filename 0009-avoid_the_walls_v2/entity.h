@@ -34,7 +34,7 @@ public:
 class Player : public Entity {
 public:
   float speed;
-  Vector2 moveDir; // <-- Add this
+  Vector2 moveDir;
 
   Player(float x, float y, float width, float height, float speed);
 
