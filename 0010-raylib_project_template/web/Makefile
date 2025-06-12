@@ -6,7 +6,7 @@ EMCC_LDFLAGS = ~/Desktop/raylib/build_html5/raylib/libraylib.a \
                --shell-file ~/Desktop/raylib/src/minshell.html
 
 SRCS = ../main.cpp ../game.cpp loop_web.cpp
-TARGET = ../growing_line.html
+TARGET = ../game.html
 
 all: $(TARGET)
 
@@ -14,4 +14,4 @@ $(TARGET): $(SRCS)
 	$(EMCC) -o $(TARGET) $(SRCS) $(EMCCFLAGS) $(EMCC_LDFLAGS)
 
 clean:
-	rm -f ../growing_line.html
+	rm -f ../game.html
